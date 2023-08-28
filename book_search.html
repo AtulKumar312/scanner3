@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book Search</title>
+    <script src="html5-qrcode.min.js"></script>
+</head>
+<body>
+    <h1>Book Search</h1>
+    <div id="qr-reader"></div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const bookName = decodeURIComponent(params.get('book'));
+
+        let qrCodeScanned = false;
+
+        // Load JSON data using Fetch API
+        fetch('book_data.json')
+            .then(response => response.json())
+            .then(data => {
+                const book = data.find(book => book.name === bookName);
+                if (book) {
+                    const bookId = book.code;
+
+                    const qrCodeDiv = document.getElementById('qr-reader');
+                    qrCodeDiv.innerHTML = `<p>Scan QR Code for Book ID: ${bookId}</p>`;
+
+                    const html5QrCode = new Html5Qrcode('qr-reader');
+                    html5QrCode.start(
+                        { facingMode: 'environment' },
+                        { fps: 10, qrbox: 250 },
+                        (qrCodeMessage) => {
+                            if (qrCodeMessage === String(bookId) && !qrCodeScanned) {
+                                qrCodeScanned = true;
+                                alert(`QR code scanned for Book ID: ${bookId}`);
+                            }
+                        },
+                        (error) => console.error('QR code scan error:', error)
+                    );
+                } else {
+                    console.error(`Book "${bookName}" not found in the data.`);
+                }
+            })
+            .catch(error => console.error('Error loading book data:', error));
+    </script>
+</body>
+</html>
